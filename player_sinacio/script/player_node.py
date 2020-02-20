@@ -39,12 +39,12 @@ class Player:
         #    self.my_team = 'blue'
         #    self.prey_team = 'red'
         #    self.hunter_team = 'green'
-        
+
         else:
             rospy.logerr("My name is not in any team list")
             exit(0)
 
-        rospy.loginfo("I am " + self.player_name + " and im in the " + self.my_team + " hunting " + self.prey_team + " run away from " + self.hunter_team)
+        rospy.loginfo("I am " + self.player_name + " and im in this team " + self.my_team + " hunting " + self.prey_team + " run away from " + self.hunter_team)
         
 def callback(msg):
     #rospy.loginfo(rospy.get_caller_id() + "I heard %s", msg.data)
