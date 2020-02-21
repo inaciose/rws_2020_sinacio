@@ -114,7 +114,7 @@ class Player:
         self.m = Marker(ns=self.player_name, id=0, type=Marker.TEXT_VIEW_FACING, action=Marker.ADD)
         self.m.header.frame_id = "sinacio"
         self.m.header.stamp = rospy.Time.now()
-        self.m.pose.position.y = 1
+        self.m.pose.position.y = 0.5
         self.m.pose.orientation.w = 1.0
         self.m.scale.z = 0.4
         self.m.color.a = 1.0
