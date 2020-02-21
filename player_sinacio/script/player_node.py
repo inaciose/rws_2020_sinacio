@@ -26,6 +26,16 @@ class Player:
         self.transform.translation.x = randrange(8)
         self.transform.translation.y = randrange(8)
 
+        self.distance = random.uniform(0, 8)
+        self.theta = 2 * math.pi * random.random()
+        print(self.distance)
+        print(self.theta)
+
+        self.transform.translation.x, self.transform.translation.y = self.polarplace(self.distance, self.theta)
+
+        print(self.transform.translation.x)
+        print(self.transform.translation.y)
+
         #Initial_R = 8 * random.random()
         #Initial_Theta = 2 * math.pi * random.random()
         #Initial_X = Initial_R * math.cos(Initial_Theta)
@@ -76,6 +86,15 @@ class Player:
             exit(0)
 
         rospy.loginfo("I am " + self.player_name + " and im in this team " + self.my_team + " hunting " + self.prey_team + " run away from " + self.hunter_team)
+
+    def polarplace(self, r, theta):
+        """theta in degrees
+
+        returns tuple; (float, float); (x,y)
+        """
+        x = r * math.cos(math.radians(theta))
+        y = r * math.sin(math.radians(theta))
+        return x,y
 
     def makeAPlayCallback(self, data):
         print("receive message make a play " + str(data.dog)) 
