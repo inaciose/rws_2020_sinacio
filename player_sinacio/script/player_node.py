@@ -112,7 +112,7 @@ class Player:
 
         # bocas marker bof
         self.m = Marker(ns=self.player_name, id=0, type=Marker.TEXT_VIEW_FACING, action=Marker.ADD)
-        self.m.header.frame_id = "moliveira"
+        self.m.header.frame_id = "sinacio"
         self.m.header.stamp = rospy.Time.now()
         self.m.pose.position.y = 1
         self.m.pose.orientation.w = 1.0
