@@ -9,6 +9,9 @@ import tf
 from geometry_msgs.msg import Transform, Quaternion
 from rws2020_msgs.msg import MakeAPlay
 
+from visualization_msgs.msg import Marker
+
+
 def getDistanceAndAngleToTarget(tf_listener, my_name, target_name,
                                 time=rospy.Time(0), max_time_to_wait=1.0):
     try:
@@ -107,7 +110,23 @@ class Player:
         self.player_name = player_name
         self.listener = tf.TransformListener()
 
-        self.m = Marker(ns=self.player_name, id = 0, type=Marker.Text_VIEW_FACING, action=Maker.ADD)
+        # bocas marker bof
+        self.m = Marker(ns=self.player_name, id=0, type=Marker.TEXT_VIEW_FACING, action=Marker.ADD)
+        self.m.header.frame_id = "moliveira"
+        self.m.header.stamp = rospy.Time.now()
+        self.m.pose.position.y = 1
+        self.m.pose.orientation.w = 1.0
+        self.m.scale.z = 0.4
+        self.m.color.a = 1.0
+        self.m.color.r = 0.0
+        self.m.color.g = 0.0
+        self.m.color.b = 0.0
+        self.m.text = "Nada a declarar"
+        self.m.lifetime = rospy.Duration(3)
+
+        self.pub_bocas = rospy.Publisher('/bocas', Marker, queue_size=1)
+
+        # bocas marker eof
 
         red_team = rospy.get_param('/red_team')
         green_team = rospy.get_param('/green_team')
@@ -129,7 +148,7 @@ class Player:
             rospy.logerr('My name is not in any team. I want to play!')
             exit(0)
 
-        rospy.logwarn(self.player_name + ' starting to play ... be very warned!!!')
+        rospy.logwarn(self.player_name + ' starting to play ... be warned I kill you all !!!')
 
         self.br = tf.TransformBroadcaster()
         self.transform = Transform()
@@ -170,12 +189,21 @@ class Player:
                 angle = 0
             vel = max_vel  # full throttle
             rospy.loginfo(self.player_name + ': Hunting ' + str(target) + '(' + str(distance) + ' away)')
+            
+            self.m.header.stamp = rospy.Time.now()
+            self.m.text = 'Oh ' + target + ' i will get you!'
+            self.pub_bocas.publish(self.m)
+
         else:  # what else to do? Lets just move towards the center
             target = 'world'
             distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
             vel = max_vel  # full throttle
             rospy.loginfo(self.player_name + ': Moving to the center of the arena.')
             rospy.loginfo('I am ' + str(distance) + ' from ' + target)
+
+            self.m.header.stamp = rospy.Time.now()
+            self.m.text = 'In good life.'
+            self.pub_bocas.publish(self.m)
 
         # Actually move the player
         movePlayer(self.br, self.player_name, self.transform, vel, angle, max_vel)
