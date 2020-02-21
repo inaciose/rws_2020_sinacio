@@ -139,10 +139,29 @@ class Player:
 
         max_vel, max_angle = msg.dog,  math.pi / 30
 
+        #bof my changes
+        angle = 0
+        min_dist = 1000
+        set_angle = max_angle
+
         if msg.green_alive:  # PURSUIT MODE: Follow any green player (only if there is at least one green alive)
+            target = msg.green_alive[0]
             target = msg.green_alive[0]  # select the first alive green player (I am hunting green)
-            distance, angle = getDistanceAndAngleToTarget(self.listener,
-                                                          self.player_name, target)
+            distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
+            for ply in msg.green_alive:
+                #target = ply  # select the first alive green player (I am hunting green)
+                distance1, angle1 = getDistanceAndAngleToTarget(self.listener, self.player_name, ply)
+                if distance1 < min_dist and angle1 < max_angle:
+                    min_dist = distance1
+                    distance =  distance1
+                    set_angle = angle1
+                    angle = angle1
+                    target = ply
+
+            #eof my changes
+            
+            #target = msg.green_alive[0]  # select the first alive green player (I am hunting green)
+            #distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
 
             if angle is None:
                 angle = 0
