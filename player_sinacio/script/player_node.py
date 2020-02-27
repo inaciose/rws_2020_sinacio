@@ -8,6 +8,7 @@ import tf
 
 from geometry_msgs.msg import Transform, Quaternion
 from rws2020_msgs.msg import MakeAPlay
+from rws2020_msgs.srv import Warp, WarpResponse
 
 from visualization_msgs.msg import Marker
 
@@ -25,6 +26,8 @@ def getDistanceAndAngleToTarget(tf_listener, my_name, target_name,
     x, y = trans[0], trans[1]
     distance = math.sqrt(x ** 2 + y ** 2)
     angle = math.atan2(y, x)
+
+    #rospy.logwarn(my_name + ': test ' + str(target_name) + '(' + str(distance) + ' away, on angle ' + str(angle) + ')')
     return distance, angle
 
 
@@ -155,31 +158,40 @@ class Player:
         randomizePlayerPose(self.transform)
 
         rospy.Subscriber("make_a_play", MakeAPlay, self.makeAPlayCallBack)  # Subscribe make a play msg
+        self.warp_server = rospy.Service('~warp', Warp, self.warpServiceCallback)
 
-    def makeAPlayCallBack(self, msg):
+    #def warpServiceCallback(self, req):
+    #    rospy.loginfo("some request from: " + req.player)
+    #    response = WarpResponse()
+    #    response.x = 0
+    #    response.y = 0
+    #    response.success = True
+    #    return response
 
+    def warpServiceCallback(self, req):
+        rospy.logwarn("sinacio some request for new place: (" + str(req.x) + ", " + str(req.y) + ")")
+
+        trans = Transform()
+
+        quat = (0,0,0,1)
+        #initial_rotation = 2 * math.pi * random.random()
+        trans = (req.x, req.y, 0)
+
+        #trans.translation.x = req.x
+        #trans.translation.y = req.y
+        #trans.translation.z = 0
+
+
+        #q = tf.transformations.quaternion_from_euler(0, 0, initial_rotation)
+        #self.transform.rotation = Quaternion(q[0], q[1], q[2], q[3])
+        self.br.sendTransform(trans, quat, rospy.Time.now(), self.player_name, "world")
+
+        response = WarpResponse()
+        response.success = True
+        return response
+
+    def makeAPlaySelectDefault(self, msg):
         max_vel, max_angle = msg.dog,  math.pi / 30
-
-        #bof my changes
-        #angle = 0
-        #min_dist = 1000
-        #set_angle = max_angle
-
-        #if msg.green_alive:  # PURSUIT MODE: Follow any green player (only if there is at least one green alive)
-        #    target = msg.green_alive[0]
-        #    target = msg.green_alive[0]  # select the first alive green player (I am hunting green)
-        #    distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
-        #    for ply in msg.green_alive:
-                #target = ply  # select the first alive green player (I am hunting green)
-        #        distance1, angle1 = getDistanceAndAngleToTarget(self.listener, self.player_name, ply)
-        #        if distance1 < min_dist and angle1 < max_angle:
-        #            min_dist = distance1
-        #            distance =  distance1
-        #            set_angle = angle1
-        #            angle = angle1
-        #            target = ply
-
-        #eof my changes
         
         if msg.green_alive:  # PURSUIT MODE: Follow any green player (only if there is at least one green alive)    
             target = msg.green_alive[0]  # select the first alive green player (I am hunting green)
@@ -188,10 +200,10 @@ class Player:
             if angle is None:
                 angle = 0
             vel = max_vel  # full throttle
-            rospy.loginfo(self.player_name + ': Hunting ' + str(target) + '(' + str(distance) + ' away)')
+            rospy.logwarn(self.player_name + ': Hunting ' + str(target) + '(' + str(distance) + ' away, on angle ' + str(angle) + ')')
             
             self.m.header.stamp = rospy.Time.now()
-            self.m.text = 'Oh ' + target + ' i will get you!'
+            self.m.text = 'i will get you' + target + '(' + str(distance) + ' away, on angle ' + str(angle) + ') !'
             self.pub_bocas.publish(self.m)
 
         else:  # what else to do? Lets just move towards the center
@@ -207,6 +219,55 @@ class Player:
 
         # Actually move the player
         movePlayer(self.br, self.player_name, self.transform, vel, angle, max_vel)
+   
+    #bof my changes
+    def selectPrey(self, msg):
+        for testTarget in msg.green_alive:
+            rospy.logwarn(self.player_name + ': rtest ' + str(testTarget))
+            angle1 = None
+            distance1 = None
+            #distance1, angle1 = getDistanceAndAngleToTarget(self.listener, self.player_name, testTarget)
+            if angle1 is None:
+                angle1 = 0
+            if distance1 is None:
+                distance1 = 100
+            rospy.logwarn(self.player_name + ': stest ' + str(testTarget) + '(' + str(distance1) + ' away, on angle ' + str(angle1) + ')')
+
+    def makeAPlaySelect1(self, msg):
+        max_vel, max_angle = msg.dog, math.pi / 30    
+        if msg.green_alive:  # PURSUIT MODE: Follow any green player (only if there is at least one green alive)    
+            target = msg.green_alive[0]  # select the first alive green player (I am hunting green)
+            distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
+
+            if angle is None:
+                angle = 0
+            vel = max_vel  # full throttle
+
+            rospy.logwarn(self.player_name + ': Hunting ' + str(target) + '(' + str(distance) + ' away, on angle ' + str(angle) + ')')
+            
+            self.m.header.stamp = rospy.Time.now()
+            self.m.text = 'i will get you' + target + '(' + str(distance) + ' away, on angle ' + str(angle) + ') !'
+            self.pub_bocas.publish(self.m)
+
+        else:  # what else to do? Lets just move towards the center
+            target = 'world'
+            distance, angle = getDistanceAndAngleToTarget(self.listener, self.player_name, target)
+            vel = max_vel  # full throttle
+            rospy.loginfo(self.player_name + ': Moving to the center of the arena.')
+            rospy.loginfo('I am ' + str(distance) + ' from ' + target)
+
+            self.m.header.stamp = rospy.Time.now()
+            self.m.text = 'In good life.'
+            self.pub_bocas.publish(self.m)
+
+        # Actually move the player
+        movePlayer(self.br, self.player_name, self.transform, vel, angle, max_vel)
+    #eof my changes
+
+    def makeAPlayCallBack(self, msg):
+        self.makeAPlaySelectDefault(msg)
+        #self.selectPrey(msg)
+        #self.makeAPlaySelect1(msg)
 
 
 def main():
